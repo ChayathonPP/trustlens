@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+  api-gateway:
+    build: ./apps/api-gateway
+    container_name: tl-api-gateway
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    environment:
+      PROVENANCE_URL: http://provenance-svc:7001
+      IMAGE_URL: http://image-detector:7002
+      FUSION_URL: http://fusion-svc:7003
+    ports:
+      - "8000:8000"
+    depends_on:
+      - provenance-svc
+      - image-detector
+      - fusion-svc
+
+  provenance-svc:
+    build: ./services/provenance-svc
+    container_name: tl-provenance
+    command: uvicorn main:app --host 0.0.0.0 --port 7001
+    ports: ["7001:7001"]
+
+  image-detector:
+    build: ./services/image-detector
+    container_name: tl-image
+    command: uvicorn main:app --host 0.0.0.0 --port 7002
+    ports: ["7002:7002"]
+
+  fusion-svc:
+    build: ./services/fusion-svc
+    container_name: tl-fusion
+    command: uvicorn main:app --host 0.0.0.0 --port 7003
+    ports: ["7003:7003"]
