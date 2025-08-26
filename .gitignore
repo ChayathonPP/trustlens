@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.env
+.venv
+venv/
+ENV/
+.envrc
+*.env
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (for web-dashboard later)
+node_modules/
+.next/
+dist/
