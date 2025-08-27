@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -34,3 +35,12 @@ def analyze(req: AnalyzeReq):
             f"{FUSE_URL}/fuse", json={"provenance": prov, "image": img}
         ).json()
     return {"trust": fused, "signals": {"provenance": prov, "image": img}}
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For development. Restrict in production if needed.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
