@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TrustLens Options</title>
+    <style>
+      body { font: 14px system-ui, -apple-system, Segoe UI, Roboto; padding: 16px; }
+      input { width: 360px; padding: 6px; }
+      button { margin-left: 8px; padding: 6px 10px; }
+    </style>
+  </head>
+  <body>
+    <label>API URL:
+      <input id="api" placeholder="http://localhost:8000" />
+    </label>
+    <button id="save">Save</button>
+    <script>
+      const $ = (s)=>document.querySelector(s);
+      chrome.storage.sync.get(["TRUSTLENS_API_URL"], (res)=>{
+        $("#api").value = res.TRUSTLENS_API_URL || "http://localhost:8000";
+      });
+      $("#save").onclick = ()=>{
+        chrome.storage.sync.set({ TRUSTLENS_API_URL: $("#api").value.trim() }, ()=>window.close());
+      };
+    </script>
+  </body>
+</html>

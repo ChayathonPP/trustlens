@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "TrustLens — AI Detector",
+  "version": "0.1.1",
+  "description": "Cross-site detector that samples frames/audio and overlays a Likely AI / Likely Human / Uncertain badge.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [],
+  "host_permissions": [
+    "https://*.youtube.com/*",
+    "https://*.studio.youtube.com/*",
+    "https://*.tiktok.com/*",
+    "https://*.twitter.com/*",
+    "https://*.x.com/*",
+    "https://*.facebook.com/*",
+    "https://*.instagram.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://*.studio.youtube.com/*",
+        "https://*.tiktok.com/*",
+        "https://*.twitter.com/*",
+        "https://*.x.com/*",
+        "https://*.facebook.com/*",
+        "https://*.instagram.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/icon16.png",
+        "icons/icon48.png",
+        "icons/icon128.png",
+        "icons/ai-red.png",
+        "icons/human-green.png",
+        "icons/uncertain-amber.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

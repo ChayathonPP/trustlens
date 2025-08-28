@@ -1,76 +1,180 @@
 "use client";
 
-import { useState } from "react";
-import { analyzeContent } from "@/lib/api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export default function Home() {
-  const [url, setUrl] = useState("https://picsum.photos/400");
-  const [type, setType] = useState<"image" | "video">("image");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+type Verdict = "likely_ai" | "likely_human" | "inconclusive";
+
+type TrustSignals = {
+  provenance?: {
+    has_c2pa?: boolean;
+    claims?: unknown;
+    reasons?: string[];
+  };
+  image?: {
+    p_ai?: number; // 0..1
+    reasons?: string[];
+  };
+};
+
+type TrustResponse = {
+  trust: {
+    trust_score: number; // 0..100
+    verdict: Verdict | string;
+    explanations: string[];
+  };
+  signals: TrustSignals;
+};
+
+type AnalyzePayload =
+  | { type: "image"; content_url: string }
+  | { type: "video"; content_url: string }
+  | { type: "audio"; content_url: string };
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+function verdictBadgeColor(verdict: string): string {
+  switch (verdict) {
+    case "likely_ai":
+      return "bg-red-500";
+    case "likely_human":
+      return "bg-emerald-500";
+    default:
+      return "bg-amber-500";
+  }
+}
+
+export default function Page() {
+  const [url, setUrl] = useState<string>("https://picsum.photos/400");
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<TrustResponse | null>(null);
 
-  const onAnalyze = async () => {
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const payload: AnalyzePayload = useMemo(
+    () => ({ type: "image", content_url: url }),
+    [url]
+  );
+
+  const analyze = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setResult(null);
+
+    controllerRef.current?.abort();
+    const ctrl = new AbortController();
+    controllerRef.current = ctrl;
+
     try {
-      const data = await analyzeContent(type, url);
-      if ((data as any)?.error) {
-        setError(`API error ${data.status}`);
-      } else {
-        setResult(data);
+      const res = await fetch(`${API_URL}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API ${res.status}: ${text}`);
       }
-    } catch (e: any) {
-      setError(e?.message ?? "Unknown error");
+
+      const json: TrustResponse = await res.json();
+      setResult(json);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      setError(msg);
+      setResult(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [payload]);
+
+  useEffect(() => {
+    // run once on mount for the default URL
+    void analyze();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const badge = result?.trust;
+  const signals = result?.signals;
 
   return (
-    <main className="min-h-screen flex flex-col items-center p-8 gap-6">
-      <h1 className="text-3xl font-bold">TrustLens Dashboard</h1>
+    <main className="min-h-screen bg-gray-950 text-gray-100">
+      <div className="mx-auto max-w-4xl p-6 space-y-6">
+        <header className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">TrustLens Dashboard</h1>
+          <span className="text-xs text-gray-400">
+            API: {API_URL.replace(/^https?:\/\//, "")}
+          </span>
+        </header>
 
-      <div className="w-full max-w-2xl grid gap-3">
-        <label className="text-sm font-medium">Type</label>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as any)}
-          className="border rounded p-2"
-        >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
+        <section className="rounded-xl border border-gray-800 p-4 space-y-4">
+          <div className="flex gap-2">
+            <input
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Image/Video URL"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <button
+              onClick={() => void analyze()}
+              disabled={loading || !url}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
+            >
+              {loading ? "Analyzing..." : "Analyze"}
+            </button>
+          </div>
 
-        <label className="text-sm font-medium mt-4">Content URL</label>
-        <input
-          className="border rounded p-2"
-          placeholder="https://..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
+          {error && (
+            <div className="rounded-lg border border-red-700 bg-red-950 px-3 py-2 text-sm text-red-200">
+              {error}
+            </div>
+          )}
 
-        <button
-          onClick={onAnalyze}
-          disabled={loading || !url}
-          className="mt-4 rounded px-4 py-2 bg-blue-600 text-white disabled:opacity-50"
-        >
-          {loading ? "Analyzing..." : "Analyze"}
-        </button>
+          {badge && (
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${verdictBadgeColor(
+                  String(badge.verdict)
+                )}`}
+              >
+                {String(badge.verdict).replace("_", " ")}
+              </span>
+              <span className="text-sm text-gray-400">
+                Trust score: <b>{badge.trust_score}</b>
+              </span>
+            </div>
+          )}
+        </section>
+
+        {signals && (
+          <section className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-gray-800 p-4">
+              <h3 className="mb-2 text-sm font-medium text-gray-300">
+                Image Signals
+              </h3>
+              <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1">
+                {"image" in signals && signals.image?.p_ai !== undefined && (
+                  <li>P(AI): {signals.image.p_ai.toFixed(2)}</li>
+                )}
+                {signals.image?.reasons?.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-gray-800 p-4">
+              <h3 className="mb-2 text-sm font-medium text-gray-300">
+                Provenance
+              </h3>
+              <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1">
+                {signals.provenance?.has_c2pa !== undefined && (
+                  <li>C2PA: {signals.provenance.has_c2pa ? "yes" : "no"}</li>
+                )}
+                {signals.provenance?.reasons?.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
       </div>
-
-      {error && (
-        <div className="text-red-600">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <pre className="w-full max-w-3xl bg-gray-100 p-4 rounded text-sm overflow-auto">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
     </main>
   );
 }

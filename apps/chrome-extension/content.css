@@ -1,0 +1,53 @@
+/* Badge container (fixed inside the page) */
+#trustlens-badge {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 2147483647; /* above site chrome */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(10, 10, 12, 0.78);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.35);
+
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: #f5f7fb;
+  letter-spacing: 0.2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* the icon we’ll load via chrome.runtime.getURL(...) */
+#trustlens-badge img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  opacity: 0.95;
+}
+
+/* verdict chip */
+#trustlens-badge .tl-chip {
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  background: #2b2f3a;
+}
+
+/* small, faint text (latency, engine, etc.) */
+#trustlens-badge .tl-subtle {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* dynamic verdict colors */
+#trustlens-badge .is-ai     { background: #3b0b0b; color: #ff8c8c; }     /* red-ish */
+#trustlens-badge .is-human  { background: #0d3117; color: #71f1a5; }     /* green-ish */
+#trustlens-badge .is-unk    { background: #2f2f2f; color: #d9d9d9; }     /* grey */
+#trustlens-badge .is-off    { background: #383b45; color: #b8b9c3; }     /* offline/fallback */
+
