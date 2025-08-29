@@ -1,53 +1,65 @@
-/* Badge container (fixed inside the page) */
+/* Root container for the badge; positioned over the video area */
 #trustlens-badge {
-  position: fixed;
+  position: absolute;
+  z-index: 2147483647; /* above players’ UI */
   top: 12px;
   left: 12px;
-  z-index: 2147483647; /* above site chrome */
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(10, 10, 12, 0.78);
-  backdrop-filter: blur(2px);
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.35);
-
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color: #f5f7fb;
-  letter-spacing: 0.2px;
-  user-select: none;
-  -webkit-user-select: none;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(33, 37, 41, 0.88);
+  color: #f8f9fa;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  pointer-events: none; /* don’t block player controls */
 }
 
-/* the icon we’ll load via chrome.runtime.getURL(...) */
-#trustlens-badge img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+/* Icon inside the badge */
+#trustlens-badge .trustlens-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  background-size: cover;
+  border-radius: 3px;
+}
+
+/* Text stack */
+#trustlens-badge .trustlens-text {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#trustlens-badge .trustlens-title {
+  font-weight: 700;
   opacity: 0.95;
 }
 
-/* verdict chip */
-#trustlens-badge .tl-chip {
-  font-size: 12px;
-  line-height: 1;
-  padding: 5px 8px;
+#trustlens-badge .trustlens-score {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+/* Status color accents (little pill behind title) */
+#trustlens-badge .pill {
+  padding: 2px 6px;
   border-radius: 999px;
-  font-weight: 600;
-  background: #2b2f3a;
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-/* small, faint text (latency, engine, etc.) */
-#trustlens-badge .tl-subtle {
-  font-size: 10px;
-  opacity: 0.7;
-}
+/* Colors per verdict */
+.trustlens-human .pill { background: rgba(25, 135, 84, 0.9); }
+.trustlens-ai    .pill { background: rgba(220, 53, 69, 0.9); }
+.trustlens-unc   .pill { background: rgba(255, 193, 7, 0.95); color: #222; }
 
-/* dynamic verdict colors */
-#trustlens-badge .is-ai     { background: #3b0b0b; color: #ff8c8c; }     /* red-ish */
-#trustlens-badge .is-human  { background: #0d3117; color: #71f1a5; }     /* green-ish */
-#trustlens-badge .is-unk    { background: #2f2f2f; color: #d9d9d9; }     /* grey */
-#trustlens-badge .is-off    { background: #383b45; color: #b8b9c3; }     /* offline/fallback */
+/* When we don't have results yet / errors */
+.trustlens-offline .pill { background: rgba(108, 117, 125, 0.9); }
 
+.trustlens-hidden { display: none !important; }
